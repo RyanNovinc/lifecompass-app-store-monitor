@@ -52,14 +52,54 @@ async function getAppVersions() {
   return await response.json();
 }
 
-// Send Discord notification
-async function sendDiscordNotification(message, isError = false) {
+// Send Discord notification - LOUD VERSION! 🔊
+async function sendDiscordNotification(message, isError = false, isStatusChange = false) {
   if (!DISCORD_WEBHOOK_URL) {
     console.log('Discord webhook not configured, skipping notification');
     return;
   }
 
-  const color = isError ? 15158332 : 3066993; // Red for error, green for success
+  // For status changes, make it SUPER LOUD with multiple alerts
+  if (isStatusChange) {
+    console.log('🚨 STATUS CHANGE DETECTED - SENDING URGENT ALERTS! 🚨');
+    
+    // Send 3 rapid-fire notifications
+    for (let i = 0; i < 3; i++) {
+      const urgentPayload = {
+        content: `@everyone 🚨🚨🚨 **URGENT LIFECOMPASS APP UPDATE** 🚨🚨🚨`,
+        embeds: [{
+          title: `🔥 APP STATUS CHANGED! (Alert ${i + 1}/3)`,
+          description: `**⚡ IMMEDIATE ACTION REQUIRED! ⚡**\n\n${message}\n\n🏃‍♂️ **CHECK APP STORE CONNECT NOW!** 🏃‍♂️`,
+          color: 16776960, // Bright yellow/orange
+          timestamp: new Date().toISOString(),
+          footer: {
+            text: `URGENT Alert #${i + 1} - App Store Monitor`
+          }
+        }]
+      };
+
+      try {
+        const response = await fetch(DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(urgentPayload)
+        });
+        
+        if (response.ok) {
+          console.log(`Urgent alert ${i + 1}/3 sent successfully`);
+        }
+        
+        // Wait 3 seconds between alerts
+        if (i < 2) await new Promise(resolve => setTimeout(resolve, 3000));
+      } catch (error) {
+        console.error(`Error sending urgent alert ${i + 1}:`, error);
+      }
+    }
+    return;
+  }
+
+  // Regular notification (for initial status, errors, etc.)
+  const color = isError ? 15158332 : 3066993;
   const emoji = isError ? '❌' : '🔔';
 
   const payload = {
@@ -77,9 +117,7 @@ async function sendDiscordNotification(message, isError = false) {
   try {
     const response = await fetch(DISCORD_WEBHOOK_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
@@ -163,8 +201,8 @@ async function monitorAppStore() {
                      `**New Status:** ${formatStatus(currentStatus.appStoreState)}\n\n` +
                      `Time: ${new Date().toLocaleString()}`;
 
-      console.log('Status changed! Sending notification...');
-      await sendDiscordNotification(message);
+      console.log('Status changed! Sending LOUD notification...');
+      await sendDiscordNotification(message, false, true); // isStatusChange = true
       
       // If rejected, send additional info
       if (currentStatus.appStoreState === 'REJECTED') {
