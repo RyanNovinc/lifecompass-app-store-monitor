@@ -1,0 +1,13 @@
+{
+  "name": "app-store-monitor",
+  "version": "1.0.0",
+  "description": "Monitor App Store Connect for app review status changes",
+  "main": "monitor-app-store.js",
+  "scripts": {
+    "start": "node monitor-app-store.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "node-fetch": "^3.3.2"
+  }
+}
