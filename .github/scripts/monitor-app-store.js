@@ -59,21 +59,24 @@ async function sendDiscordNotification(message, isError = false, isStatusChange 
     return;
   }
 
-  // For status changes, make it SUPER LOUD with multiple alerts
+  // For status changes, make it SUPER LOUD with 60 alerts over 1 minute!
   if (isStatusChange) {
-    console.log('🚨 STATUS CHANGE DETECTED - SENDING URGENT ALERTS! 🚨');
+    console.log('🚨 STATUS CHANGE DETECTED - SENDING 60 ALERTS OVER 1 MINUTE! 🚨');
     
-    // Send 3 rapid-fire notifications
-    for (let i = 0; i < 3; i++) {
+    // Send 60 notifications - one every second for a full minute
+    for (let i = 0; i < 60; i++) {
+      const alertTypes = ['🚨', '🔥', '⚡', '💥', '🚁', '📢', '🆘', '⭐'];
+      const randomEmoji = alertTypes[i % alertTypes.length];
+      
       const urgentPayload = {
-        content: `@everyone 🚨🚨🚨 **URGENT LIFECOMPASS APP UPDATE** 🚨🚨🚨`,
+        content: `@everyone ${randomEmoji}${randomEmoji}${randomEmoji} **LIFECOMPASS APP STATUS CHANGED** ${randomEmoji}${randomEmoji}${randomEmoji}`,
         embeds: [{
-          title: `🔥 APP STATUS CHANGED! (Alert ${i + 1}/3)`,
-          description: `**⚡ IMMEDIATE ACTION REQUIRED! ⚡**\n\n${message}\n\n🏃‍♂️ **CHECK APP STORE CONNECT NOW!** 🏃‍♂️`,
-          color: 16776960, // Bright yellow/orange
+          title: `${randomEmoji} ALERT ${i + 1}/60 - APP STATUS CHANGED!`,
+          description: `**⚡ WAKE UP! YOUR APP STATUS CHANGED! ⚡**\n\n${message}\n\n🏃‍♂️ **GO TO APP STORE CONNECT RIGHT NOW!** 🏃‍♂️\n\n⏰ Alert ${i + 1} of 60 (${60 - i - 1} more coming)`,
+          color: i % 2 === 0 ? 16776960 : 15158332, // Alternate between yellow and red
           timestamp: new Date().toISOString(),
           footer: {
-            text: `URGENT Alert #${i + 1} - App Store Monitor`
+            text: `URGENT Alert #${i + 1}/60 - App Store Monitor`
           }
         }]
       };
@@ -86,15 +89,37 @@ async function sendDiscordNotification(message, isError = false, isStatusChange 
         });
         
         if (response.ok) {
-          console.log(`Urgent alert ${i + 1}/3 sent successfully`);
+          console.log(`🚨 Urgent alert ${i + 1}/60 sent successfully`);
         }
         
-        // Wait 3 seconds between alerts
-        if (i < 2) await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait 1 second between alerts (except for the last one)
+        if (i < 59) await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         console.error(`Error sending urgent alert ${i + 1}:`, error);
       }
     }
+    
+    // Send final summary message
+    const finalPayload = {
+      content: `@everyone 🎯 **ALERT SEQUENCE COMPLETE** 🎯`,
+      embeds: [{
+        title: `✅ 60 ALERTS SENT - CHECK APP STORE CONNECT NOW!`,
+        description: `**Your LifeCompass app status has changed!**\n\n${message}\n\n**Action Required: Log into App Store Connect immediately!**`,
+        color: 3066993, // Green
+        timestamp: new Date().toISOString(),
+        footer: {
+          text: 'Alert sequence complete - App Store Monitor'
+        }
+      }]
+    };
+    
+    await fetch(DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(finalPayload)
+    });
+    
+    console.log('🎯 Alert sequence complete - 60 notifications sent!');
     return;
   }
 
